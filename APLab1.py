@@ -38,6 +38,25 @@ class ReviewsCard:
             return text_spoiler
 
 
+class ReviewDataProcessor:
+    def __init__(self, reviews_data):
+        self.reviews_data = reviews_data
+        self.main_folder = "dataset"
+
+    def process(self):
+        book_name = self.reviews_data["name"].replace(" ", "_")
+        star_folder = os.path.join(self.main_folder, str(self.reviews_data["count_star"]))
+        os.makedirs(star_folder, exist_ok=True)
+        existing_files = [f for f in os.listdir(star_folder) if f.endswith(".txt")]
+        next_number = len(existing_files)
+        new_file_name = f"{next_number:04d}.txt"
+        new_file_path = os.path.join(star_folder, new_file_name)
+        with open(new_file_path, "w", encoding="utf-8") as file:
+            file.write(self.reviews_data["author"] + "\n")
+            file.write(self.reviews_data["name"] + "\n")
+            file.write(self.reviews_data["reviews"])
+
+
 def main():
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
@@ -89,7 +108,9 @@ def main():
                         "count_star": reviews_info.get_count_star(),
                         "reviews": reviews_info.get_reviews_spoiler_text(),
                     }
-
+                    
+                    processor = ReviewDataProcessor(reviews_data)
+                    processor.process()
                 except NoSuchElementException:
 
                     reviews_data = {
@@ -98,7 +119,9 @@ def main():
                         "count_star": reviews_info.get_count_star(),
                         "reviews": reviews_info.get_reviews_text(),
                     }
-
+                    
+                    processor = ReviewDataProcessor(reviews_data)
+                    processor.process()
 
                 print(reviews_data)
 
